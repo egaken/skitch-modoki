@@ -47,7 +47,7 @@
   let zoomMode = 'fit';          // 'fit' | '100'
 
   let currentTool = 'arrow';     // 'select' | 'arrow' | 'rect' | 'ellipse' | 'text' | 'mosaic' | 'pen'
-  let currentColor = '#FF0066';  // 選択中の色
+  let currentColor = '#F43F5E';  // 選択中の色（モダンなコーラルレッド）
   let currentSize = 'medium';    // 'small' | 'medium' | 'large'
 
   let shapes = [];               // 描画された図形オブジェクトの配列
@@ -502,7 +502,7 @@
     const img = new Image();
     img.onload = () => {
       setupCanvasWithImage(img);
-      // サンプルとしてSkitch風の矢印と枠線を1つずつ最初から配置しておく（すぐ動かせる体験）
+      // サンプルとしてモダンな矢印と枠線を1つずつ最初から配置しておく（すぐ動かせる体験）
       shapes.push(
         {
           id: createId(),
@@ -511,7 +511,7 @@
           y1: 625,
           x2: 848,
           y2: 590,
-          color: '#FF0066',
+          color: '#F43F5E',
           size: 'medium'
         },
         {
@@ -521,7 +521,7 @@
           y1: 205,
           x2: 1075,
           y2: 375,
-          color: '#FF0066',
+          color: '#F43F5E',
           size: 'medium'
         },
         {
@@ -530,7 +530,7 @@
           x: 765,
           y: 162,
           text: 'ここを確認！',
-          color: '#FF0066',
+          color: '#F43F5E',
           size: 'medium'
         }
       );
@@ -983,7 +983,7 @@
   }
 
   /**
-   * Skitch風の先太り＆白縁＋ドロップシャドウ付き矢印を描画
+   * モダンでシャープな流線型矢印（CleanShot X 風：白フチなし＋控えめなソフトシャドウ）
    */
   function drawSkitchArrow(context, shape) {
     const { x1, y1, x2, y2, color, size } = shape;
@@ -996,46 +996,47 @@
     const scale = (SIZE_SCALE[size] || 1.0) * unit;
     const angle = Math.atan2(dy, dx);
 
-    // Skitch特有のシルエット（細い根元 → 太くなるシャフト → くびれ → 大きく開いた矢じり）
-    const headLen = Math.min(dist * 0.6, 42 * scale);
-    const headWing = Math.min(dist * 0.48, 23 * scale);
-    const neckX = dist - headLen * 0.78;
-    const neckHalfW = Math.min(headWing * 0.45, 9 * scale);
-    const tailHalfW = Math.max(2.2, 3.2 * scale);
+    // 洗練された流線型シルエット（細い根元 → なめらかなテーパー → 内側に切れ込んだシャープな矢じり）
+    const headLen = Math.min(dist * 0.52, 34 * scale);
+    const headWing = Math.min(dist * 0.36, 15.5 * scale);
+    const barbX = dist - headLen;
+    const neckX = dist - headLen * 0.72; // 矢じりの返し（えぐり）
+    const neckHalfW = Math.min(headWing * 0.34, 4.8 * scale);
+    const tailHalfW = Math.max(1.4, 1.8 * scale);
 
     context.translate(x1, y1);
     context.rotate(angle);
 
     context.beginPath();
-    // 根元の丸み
     context.arc(0, 0, tailHalfW, Math.PI * 0.5, Math.PI * 1.5, false);
-    // 上側シャフト → 首 → 上の翼 → 先端 → 下の翼 → 首 → 下側シャフト
-    context.lineTo(neckX, -neckHalfW);
-    context.lineTo(dist - headLen, -headWing);
+    // 根元から首にかけてわずかに反りながら広がる流線型カーブ
+    context.quadraticCurveTo(neckX * 0.55, -tailHalfW * 1.15, neckX, -neckHalfW);
+    context.lineTo(barbX, -headWing);
     context.lineTo(dist, 0);
-    context.lineTo(dist - headLen, headWing);
+    context.lineTo(barbX, headWing);
     context.lineTo(neckX, neckHalfW);
+    context.quadraticCurveTo(neckX * 0.55, tailHalfW * 1.15, 0, tailHalfW);
     context.closePath();
 
-    // 1. ドロップシャドウ付きの白い外縁
-    context.shadowColor = 'rgba(0, 0, 0, 0.45)';
-    context.shadowBlur = 8 * unit;
-    context.shadowOffsetY = 2.5 * unit;
+    // 控えめで上品なソフトドロップシャドウ
+    context.shadowColor = 'rgba(0, 0, 0, 0.22)';
+    context.shadowBlur = 6 * unit;
+    context.shadowOffsetY = 2 * unit;
 
-    context.lineJoin = 'round';
-    context.lineCap = 'round';
-    context.lineWidth = 7 * scale;
-    context.strokeStyle = getOutlineColor(color);
-    context.stroke();
-
-    // 2. 内側のメインカラー塗りつぶし
-    context.shadowColor = 'transparent';
     context.fillStyle = color;
     context.fill();
+
+    // 矢じりの角をわずかに滑らかに整える同色ストローク
+    context.shadowColor = 'transparent';
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.lineWidth = 2.2 * scale;
+    context.strokeStyle = color;
+    context.stroke();
   }
 
   /**
-   * Skitch風の白縁＋影付き四角枠
+   * モダンでスッキリした単色四角枠（白フチなし＋控えめなソフトシャドウ）
    */
   function drawSkitchRect(context, shape) {
     const x = Math.min(shape.x1, shape.x2);
@@ -1046,30 +1047,22 @@
 
     const unit = getBaseUnit();
     const scale = (SIZE_SCALE[shape.size] || 1.0) * unit;
-    const innerWidth = 6.5 * scale;
-    const outerWidth = innerWidth + 6.5 * scale;
+    const strokeWidth = 4.2 * scale;
     const radius = Math.min(8 * scale, w / 4, h / 4);
 
     roundRect(context, x, y, w, h, radius);
 
-    // 外側の白縁＋影
-    context.shadowColor = 'rgba(0, 0, 0, 0.42)';
-    context.shadowBlur = 8 * unit;
-    context.shadowOffsetY = 2 * unit;
+    context.shadowColor = 'rgba(0, 0, 0, 0.20)';
+    context.shadowBlur = 5 * unit;
+    context.shadowOffsetY = 1.5 * unit;
     context.lineJoin = 'round';
-    context.lineWidth = outerWidth;
-    context.strokeStyle = getOutlineColor(shape.color);
-    context.stroke();
-
-    // 内側の色枠線
-    context.shadowColor = 'transparent';
-    context.lineWidth = innerWidth;
+    context.lineWidth = strokeWidth;
     context.strokeStyle = shape.color;
     context.stroke();
   }
 
   /**
-   * Skitch風の白縁＋影付き丸・楕円枠
+   * モダンでスッキリした単色丸・楕円枠（白フチなし＋控えめなソフトシャドウ）
    */
   function drawSkitchEllipse(context, shape) {
     const cx = (shape.x1 + shape.x2) / 2;
@@ -1080,29 +1073,21 @@
 
     const unit = getBaseUnit();
     const scale = (SIZE_SCALE[shape.size] || 1.0) * unit;
-    const innerWidth = 6.5 * scale;
-    const outerWidth = innerWidth + 6.5 * scale;
+    const strokeWidth = 4.2 * scale;
 
     context.beginPath();
     context.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
 
-    // 外側の白縁＋影
-    context.shadowColor = 'rgba(0, 0, 0, 0.42)';
-    context.shadowBlur = 8 * unit;
-    context.shadowOffsetY = 2 * unit;
-    context.lineWidth = outerWidth;
-    context.strokeStyle = getOutlineColor(shape.color);
-    context.stroke();
-
-    // 内側の色枠線
-    context.shadowColor = 'transparent';
-    context.lineWidth = innerWidth;
+    context.shadowColor = 'rgba(0, 0, 0, 0.20)';
+    context.shadowBlur = 5 * unit;
+    context.shadowOffsetY = 1.5 * unit;
+    context.lineWidth = strokeWidth;
     context.strokeStyle = shape.color;
     context.stroke();
   }
 
   /**
-   * Skitch風の白縁＋影付きフリーハンドペン
+   * モダンで滑らかな単色フリーハンドペン（白フチなし＋控えめなソフトシャドウ）
    */
   function drawSkitchPen(context, shape) {
     const pts = shape.points;
@@ -1110,8 +1095,7 @@
 
     const unit = getBaseUnit();
     const scale = (SIZE_SCALE[shape.size] || 1.0) * unit;
-    const innerWidth = 6 * scale;
-    const outerWidth = innerWidth + 6 * scale;
+    const strokeWidth = 4.2 * scale;
 
     context.beginPath();
     context.moveTo(pts[0].x, pts[0].y);
@@ -1124,33 +1108,25 @@
 
     context.lineCap = 'round';
     context.lineJoin = 'round';
-
-    // 外側の白縁＋影
-    context.shadowColor = 'rgba(0, 0, 0, 0.4)';
-    context.shadowBlur = 6 * unit;
-    context.shadowOffsetY = 2 * unit;
-    context.lineWidth = outerWidth;
-    context.strokeStyle = getOutlineColor(shape.color);
-    context.stroke();
-
-    // 内側のメインカラー
-    context.shadowColor = 'transparent';
-    context.lineWidth = innerWidth;
+    context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+    context.shadowBlur = 4 * unit;
+    context.shadowOffsetY = 1.5 * unit;
+    context.lineWidth = strokeWidth;
     context.strokeStyle = shape.color;
     context.stroke();
   }
 
   /**
-   * Skitch風の白縁＋影付き太字テキスト
+   * モダンで読みやすいクリーンテキスト（テレビテロップ風の太い白フチを廃止し、上品なソフトシャドウで視認性を確保）
    */
   function getTextMetricsBox(context, shape) {
     const unit = getBaseUnit();
     const scale = (SIZE_SCALE[shape.size] || 1.0) * unit;
-    const fontSize = Math.round(34 * scale);
-    const lineHeight = fontSize * 1.25;
+    const fontSize = Math.round(30 * scale);
+    const lineHeight = fontSize * 1.28;
 
     context.save();
-    context.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif`;
+    context.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif`;
     const lines = (shape.text || '').split('\n');
     let maxW = 0;
     for (const line of lines) {
@@ -1174,35 +1150,24 @@
 
   function drawSkitchText(context, shape) {
     const box = getTextMetricsBox(context, shape);
-    const { fontSize, lineHeight, lines, scale, unit } = box;
+    const { fontSize, lineHeight, lines, unit } = box;
 
-    context.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif`;
+    context.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif`;
     context.textBaseline = 'top';
-    context.lineJoin = 'round';
-    context.lineCap = 'round';
-    context.miterLimit = 2;
 
-    // 外側の白い太縁取り＋ドロップシャドウ
-    context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    context.shadowBlur = 8 * unit;
-    context.shadowOffsetY = 2.5 * unit;
-    context.lineWidth = 8.5 * scale;
-    context.strokeStyle = getOutlineColor(shape.color);
-
-    lines.forEach((line, idx) => {
-      context.strokeText(line, shape.x, shape.y + idx * lineHeight);
-    });
-
-    // 内側の文字塗りつぶし
-    context.shadowColor = 'transparent';
+    // 袋文字（太い白フチ）は使わず、背景から自然に浮き立つソフトシャドウでモダンに描画
+    context.shadowColor = 'rgba(0, 0, 0, 0.36)';
+    context.shadowBlur = 6 * unit;
+    context.shadowOffsetY = 1.5 * unit;
     context.fillStyle = shape.color;
+
     lines.forEach((line, idx) => {
       context.fillText(line, shape.x, shape.y + idx * lineHeight);
     });
   }
 
   /**
-   * 選択範囲のピクセルモザイク処理
+   * 選択範囲のピクセルモザイク処理（四隅に優しい角丸を適用）
    */
   function drawMosaic(context, shape) {
     if (!baseImage) return;
@@ -1222,12 +1187,16 @@
     mosaicBufferCanvas.width = smallW;
     mosaicBufferCanvas.height = smallH;
 
-    // 1. 現在のキャンバス（または元画像）の該当領域を極小サイズに縮小描画
+    // 1. 該当領域を極小サイズに縮小描画
     mosaicBufferCtx.imageSmoothingEnabled = true;
     mosaicBufferCtx.clearRect(0, 0, smallW, smallH);
     mosaicBufferCtx.drawImage(baseImage, rx, ry, rw, rh, 0, 0, smallW, smallH);
 
-    // 2. 補間（ぼかし）を切って元のサイズへ拡大描画し、くっきりしたブロックモザイクにする
+    // 2. 角丸でクリップしながら元のサイズへ拡大描画し、モダンなブロックモザイクにする
+    const radius = Math.min(6 * unit, rw / 4, rh / 4);
+    roundRect(context, rx, ry, rw, rh, radius);
+    context.clip();
+
     const prevSmoothing = context.imageSmoothingEnabled;
     context.imageSmoothingEnabled = false;
     context.drawImage(mosaicBufferCanvas, 0, 0, smallW, smallH, rx, ry, rw, rh);
@@ -1257,30 +1226,29 @@
     context.save();
     const unit = getBaseUnit();
 
-    // テキストやペンの場合はバウンディングボックスを破線で表示
+    // Figma風のシャープな細線バウンディングボックス
     if (shape.type === 'text' || shape.type === 'pen' || shape.type === 'mosaic' || shape.type === 'rect' || shape.type === 'ellipse') {
       const b = getBoundingBox(shape);
-      const pad = 6 * unit;
-      context.strokeStyle = '#00B8FF';
-      context.lineWidth = 2 * unit;
-      context.setLineDash([6 * unit, 4 * unit]);
+      const pad = 5 * unit;
+      context.strokeStyle = 'rgba(59, 130, 246, 0.85)';
+      context.lineWidth = 1.5 * unit;
       context.strokeRect(b.x - pad, b.y - pad, b.w + pad * 2, b.h + pad * 2);
-      context.setLineDash([]);
     }
 
-    // リサイズ用ハンドル（丸いつまみ）を描画
+    // リサイズ用ハンドル（スマートな白丸つまみ）を描画
     const handles = getShapeHandles(shape);
-    const radius = 7.5 * unit;
+    const radius = 5.5 * unit;
     for (const h of handles) {
       context.beginPath();
       context.arc(h.x, h.y, radius, 0, Math.PI * 2);
       context.fillStyle = '#FFFFFF';
-      context.shadowColor = 'rgba(0, 0, 0, 0.45)';
-      context.shadowBlur = 4 * unit;
+      context.shadowColor = 'rgba(0, 0, 0, 0.28)';
+      context.shadowBlur = 3 * unit;
+      context.shadowOffsetY = 1 * unit;
       context.fill();
       context.shadowColor = 'transparent';
-      context.lineWidth = 2.5 * unit;
-      context.strokeStyle = '#00B8FF';
+      context.lineWidth = 2 * unit;
+      context.strokeStyle = '#3B82F6';
       context.stroke();
     }
 
