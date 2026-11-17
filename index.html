@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skitch Modoki - シンプル画像注釈・編集アプリ</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- HEIC形式の画像をブラウザ内でJPEG/PNGに変換するライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+</head>
+<body>
+  <!-- 上部ツールバー -->
+  <header class="toolbar">
+    <div class="toolbar-section brand-section">
+      <div class="brand" title="Skitch Modoki">
+        <span class="brand-icon">🏹</span>
+        <span class="brand-name">Skitch<span class="brand-sub">Modoki</span></span>
+      </div>
+      <button id="btn-open" class="action-btn" title="画像ファイルを選択して開く (JPG / PNG / WebP / HEIC)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span>画像を開く</span>
+      </button>
+      <input type="file" id="file-input" accept="image/*,.heic,.heif,.HEIC,.HEIF" hidden>
+    </div>
+
+    <!-- 描画ツール選択 -->
+    <div class="toolbar-section tools-section" role="group" aria-label="描画ツール">
+      <button class="tool-btn" data-tool="select" title="選択・移動ツール (V) - 描いた図形を移動・サイズ変更します">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+          <path d="M13 13l6 6"/>
+        </svg>
+        <span>選択</span>
+      </button>
+
+      <button class="tool-btn active" data-tool="arrow" title="矢印ツール (A) - ドラッグしてSkitch風の矢印を引きます">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4">
+          <line x1="5" y1="19" x2="19" y2="5"/>
+          <polyline points="9 5 19 5 19 15"/>
+        </svg>
+        <span>矢印</span>
+      </button>
+
+      <button class="tool-btn" data-tool="rect" title="四角枠ツール (R) - ドラッグして四角い枠線で囲みます">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="3" y="5" width="18" height="14" rx="2" ry="2"/>
+        </svg>
+        <span>四角</span>
+      </button>
+
+      <button class="tool-btn" data-tool="ellipse" title="丸枠ツール (O) - ドラッグして丸や楕円で囲みます">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+          <ellipse cx="12" cy="12" rx="9" ry="7"/>
+        </svg>
+        <span>丸枠</span>
+      </button>
+
+      <button class="tool-btn" data-tool="text" title="文字ツール (T) - クリックした場所に縁取り文字を入れます">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="4 7 4 4 20 4 20 7"/>
+          <line x1="9" y1="20" x2="15" y2="20"/>
+          <line x1="12" y1="4" x2="12" y2="20"/>
+        </svg>
+        <span>文字</span>
+      </button>
+
+      <button class="tool-btn" data-tool="mosaic" title="モザイクツール (M) - ドラッグした範囲をぼかして隠します">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+        </svg>
+        <span>モザイク</span>
+      </button>
+
+      <button class="tool-btn" data-tool="pen" title="フリーハンドペン (P) - 自由な線を描きます">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        </svg>
+        <span>ペン</span>
+      </button>
+    </div>
+
+    <!-- 色・太さ設定 -->
+    <div class="toolbar-section style-section">
+      <div class="color-palette" role="group" aria-label="色選択">
+        <button class="color-swatch active" data-color="#FF0066" style="--swatch-color: #FF0066;" title="マゼンタ（Skitchピンク）"></button>
+        <button class="color-swatch" data-color="#FF2A1A" style="--swatch-color: #FF2A1A;" title="赤"></button>
+        <button class="color-swatch" data-color="#FF8800" style="--swatch-color: #FF8800;" title="オレンジ"></button>
+        <button class="color-swatch" data-color="#FFD600" style="--swatch-color: #FFD600;" title="黄色"></button>
+        <button class="color-swatch" data-color="#19C332" style="--swatch-color: #19C332;" title="緑"></button>
+        <button class="color-swatch" data-color="#00B8FF" style="--swatch-color: #00B8FF;" title="水色"></button>
+        <button class="color-swatch" data-color="#1E2229" style="--swatch-color: #1E2229;" title="黒"></button>
+        <button class="color-swatch" data-color="#FFFFFF" style="--swatch-color: #FFFFFF;" title="白"></button>
+      </div>
+
+      <div class="size-selector" role="group" aria-label="太さ・サイズ">
+        <button class="size-btn" data-size="small" title="サイズ：小">小</button>
+        <button class="size-btn active" data-size="medium" title="サイズ：中">中</button>
+        <button class="size-btn" data-size="large" title="サイズ：大">大</button>
+      </div>
+    </div>
+
+    <!-- 編集操作＆保存 -->
+    <div class="toolbar-section actions-section">
+      <button id="btn-undo" class="icon-btn" title="元に戻す (Ctrl+Z / Cmd+Z)" disabled>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7v6h6"/>
+          <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+        </svg>
+      </button>
+      <button id="btn-redo" class="icon-btn" title="やり直す (Ctrl+Y / Cmd+Shift+Z)" disabled>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 7v6h-6"/>
+          <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+        </svg>
+      </button>
+      <button id="btn-delete" class="icon-btn danger-hover" title="選択中の図形を削除 (Delete / Backspace)" disabled>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+      <button id="btn-clear" class="text-btn danger-hover" title="描き込んだ図形をすべて消去" disabled>全消去</button>
+
+      <button id="btn-save" class="save-btn" title="編集した画像をPNG形式で保存（ダウンロード）" disabled>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>画像を保存</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- メイン作業エリア -->
+  <main id="workspace" class="workspace">
+    <!-- 画像未読み込み時のドラッグ＆ドロップ案内 -->
+    <div id="empty-state" class="empty-state">
+      <div class="drop-card" id="drop-card">
+        <div class="drop-icon">🖼️</div>
+        <h2>画像をここにドラッグ＆ドロップ</h2>
+        <p class="drop-sub">またはクリックしてパソコン・スマホから画像を選択してください</p>
+        <div class="format-badges">
+          <span class="badge">JPG / PNG</span>
+          <span class="badge">WebP / GIF</span>
+          <span class="badge badge-heic">📱 iPhone HEIC / HEIF 対応</span>
+        </div>
+        <div class="empty-actions">
+          <button id="btn-empty-open" class="primary-open-btn" type="button">ファイルを選択する</button>
+          <button id="btn-sample" class="sample-btn" type="button">サンプル画像で試す</button>
+        </div>
+        <p class="privacy-note">🔒 画像はお使いのブラウザ内だけで処理され、外部サーバーには一切送信されません</p>
+      </div>
+    </div>
+
+    <!-- キャンバス表示エリア -->
+    <div id="canvas-wrapper" class="canvas-wrapper hidden">
+      <div id="canvas-stage" class="canvas-stage">
+        <canvas id="editor-canvas"></canvas>
+
+        <!-- テキスト入力用ポップアップ -->
+        <div id="text-editor" class="text-editor hidden">
+          <textarea id="text-input" rows="2" placeholder="文字を入力... (Enterで確定 / Shift+Enterで改行)"></textarea>
+          <div class="text-editor-actions">
+            <span class="text-editor-hint">Enterで確定 / Escでキャンセル</span>
+            <button type="button" id="btn-text-cancel" class="text-cancel-btn">キャンセル</button>
+            <button type="button" id="btn-text-ok" class="text-ok-btn">確定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ドラッグオーバー時の全面ガイド -->
+    <div id="drag-overlay" class="drag-overlay hidden">
+      <div class="drag-overlay-box">
+        <span class="drag-overlay-icon">📂</span>
+        <p>ここにドロップして画像を開く</p>
+      </div>
+    </div>
+
+    <!-- HEIC変換中などのローディング表示 -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <p id="loading-message">画像を読み込んでいます...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 下部ステータスバー -->
+  <footer class="statusbar">
+    <div class="status-left">
+      <span id="status-hint">💡 画像を開くとすぐに矢印や枠線を描き込めます。描いた図形は後からクリックして移動・調整できます。</span>
+    </div>
+    <div class="status-right">
+      <span id="image-info" class="image-info">画像なし</span>
+      <div id="zoom-controls" class="zoom-controls hidden">
+        <button id="btn-zoom-fit" class="zoom-btn active" title="画面サイズに合わせる">画面に合わせる</button>
+        <button id="btn-zoom-100" class="zoom-btn" title="元の解像度（100%）で表示">100%</button>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
